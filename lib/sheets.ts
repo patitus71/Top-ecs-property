@@ -1,36 +1,26 @@
-const WEB_APP_URL = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
+// All Sheets operations are proxied through /api/sheets to avoid CORS issues.
+// The actual Apps Script URL lives in APPS_SCRIPT_URL (server-only env var).
 
-export async function readSheet(sheetName: 'All land' | 'ALL HOTEL') {
-  if (!WEB_APP_URL) return null
+async function sheetsPost(body: unknown): Promise<void> {
   try {
-    const res = await fetch(`${WEB_APP_URL}?sheet=${encodeURIComponent(sheetName)}`, { cache: 'no-store' })
-    const data = await res.json()
-    return data.rows as unknown[][]
+    await fetch('/api/sheets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
   } catch {
-    return null
+    // write failures are silent — UI already updated optimistically
   }
 }
 
 export async function updateRow(sheet: string, rowIndex: number, values: unknown[]) {
-  if (!WEB_APP_URL) return
-  await fetch(WEB_APP_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'updateRow', sheet, row: rowIndex, values }),
-  })
+  await sheetsPost({ action: 'updateRow', sheet, row: rowIndex, values })
 }
 
 export async function appendRow(sheet: string, values: unknown[]) {
-  if (!WEB_APP_URL) return
-  await fetch(WEB_APP_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'appendRow', sheet, values }),
-  })
+  await sheetsPost({ action: 'appendRow', sheet, values })
 }
 
 export async function deleteRow(sheet: string, rowIndex: number) {
-  if (!WEB_APP_URL) return
-  await fetch(WEB_APP_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'deleteRow', sheet, row: rowIndex }),
-  })
+  await sheetsPost({ action: 'deleteRow', sheet, row: rowIndex })
 }

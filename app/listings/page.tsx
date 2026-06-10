@@ -6,7 +6,8 @@ import { useSearchParams } from 'next/navigation'
 import PropertyCard from '@/components/PropertyCard'
 import SearchBar from '@/components/SearchBar'
 import FilterBar from '@/components/FilterBar'
-import { LAND_DATA, HOTEL_DATA } from '@/lib/data'
+import { LAND_DATA, HOTEL_DATA, type LandPlot, type Hotel } from '@/lib/data'
+import { fetchLandData, fetchHotelData } from '@/lib/fetchData'
 import { landToMapItem, hotelToMapItem, type MapItem } from '@/lib/mapUtils'
 
 const MapView = dynamic(() => import('@/components/MapView'), {
@@ -33,6 +34,13 @@ function ListingsInner() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [activeId, setActiveId] = useState<string | null>(null)
   const [flyTo, setFlyTo] = useState<{ lat: number; lng: number; key: number } | null>(null)
+  const [landData, setLandData] = useState<LandPlot[]>(LAND_DATA)
+  const [hotelData, setHotelData] = useState<Hotel[]>(HOTEL_DATA)
+
+  useEffect(() => {
+    fetchLandData().then(setLandData)
+    fetchHotelData().then(setHotelData)
+  }, [])
 
   useEffect(() => {
     setSearch(params.get('q') ?? '')
@@ -40,15 +48,15 @@ function ListingsInner() {
   }, [params])
 
   const provinces = useMemo(() => {
-    const set = new Set([...LAND_DATA.map(l => l.province), ...HOTEL_DATA.map(h => h.province)])
+    const set = new Set([...landData.map(l => l.province), ...hotelData.map(h => h.province)])
     return Array.from(set).sort()
-  }, [])
+  }, [landData, hotelData])
 
-  type ListItem = { id: string; type: 'land' | 'hotel'; item: typeof LAND_DATA[0] | typeof HOTEL_DATA[0] }
+  type ListItem = { id: string; type: 'land' | 'hotel'; item: LandPlot | Hotel }
 
   const filtered = useMemo((): ListItem[] => {
     const q = search.toLowerCase()
-    const lands: ListItem[] = LAND_DATA
+    const lands: ListItem[] = landData
       .filter(l =>
         (typeFilter === 'all' || typeFilter === 'land') &&
         (statusFilter === 'all' || l.status === statusFilter) &&
@@ -57,7 +65,7 @@ function ListingsInner() {
       )
       .map(l => ({ id: `land-${l.no}`, type: 'land', item: l }))
 
-    const hotels: ListItem[] = HOTEL_DATA
+    const hotels: ListItem[] = hotelData
       .filter(h =>
         (typeFilter === 'all' || typeFilter === 'hotel') &&
         (statusFilter === 'all' || h.status === statusFilter) &&
@@ -67,12 +75,12 @@ function ListingsInner() {
       .map(h => ({ id: `hotel-${h.no}`, type: 'hotel', item: h }))
 
     return [...lands, ...hotels]
-  }, [search, typeFilter, provinceFilter, statusFilter])
+  }, [search, typeFilter, provinceFilter, statusFilter, landData, hotelData])
 
   const mapItems: MapItem[] = useMemo(() =>
     filtered
       .filter(f => f.item.lat && f.item.lng)
-      .map(f => f.type === 'land' ? landToMapItem(f.item as typeof LAND_DATA[0]) : hotelToMapItem(f.item as typeof HOTEL_DATA[0])),
+      .map(f => f.type === 'land' ? landToMapItem(f.item as LandPlot) : hotelToMapItem(f.item as Hotel)),
     [filtered]
   )
 
@@ -112,7 +120,7 @@ function ListingsInner() {
           provinces={provinces}
         />
         <span className="text-xs text-gray-400 sm:ml-auto whitespace-nowrap">
-          แสดง {filtered.length} / {LAND_DATA.length + HOTEL_DATA.length} รายการ
+          แสดง {filtered.length} / {landData.length + hotelData.length} รายการ
         </span>
       </div>
 

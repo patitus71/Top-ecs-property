@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import AdminTable from '@/components/admin/AdminTable'
 import EditModal from '@/components/admin/EditModal'
 import StatsBar from '@/components/admin/StatsBar'
 import { LAND_DATA, type LandPlot, formatMB } from '@/lib/data'
+import { fetchLandData } from '@/lib/fetchData'
 import { updateRow, appendRow, deleteRow } from '@/lib/sheets'
 
 const LAND_FIELDS = [
@@ -28,6 +29,8 @@ const LAND_FIELDS = [
 
 export default function AdminLandPage() {
   const [data, setData] = useState<LandPlot[]>(LAND_DATA)
+
+  useEffect(() => { fetchLandData().then(setData) }, [])
   const [search, setSearch] = useState('')
   const [provinceFilter, setProvinceFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')

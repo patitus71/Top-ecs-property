@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import AdminTable from '@/components/admin/AdminTable'
 import EditModal from '@/components/admin/EditModal'
 import StatsBar from '@/components/admin/StatsBar'
 import { HOTEL_DATA, type Hotel } from '@/lib/data'
+import { fetchHotelData } from '@/lib/fetchData'
 import { updateRow, appendRow, deleteRow } from '@/lib/sheets'
 
 const HOTEL_FIELDS = [
@@ -29,6 +30,8 @@ const HOTEL_FIELDS = [
 
 export default function AdminHotelPage() {
   const [data, setData] = useState<Hotel[]>(HOTEL_DATA)
+
+  useEffect(() => { fetchHotelData().then(setData) }, [])
   const [search, setSearch] = useState('')
   const [provinceFilter, setProvinceFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')

@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import SearchBar from '@/components/SearchBar'
 import PropertyCard from '@/components/PropertyCard'
-import { LAND_DATA, HOTEL_DATA } from '@/lib/data'
+import { LAND_DATA, HOTEL_DATA, type LandPlot, type Hotel } from '@/lib/data'
+import { fetchLandData, fetchHotelData } from '@/lib/fetchData'
 import { landToMapItem, hotelToMapItem } from '@/lib/mapUtils'
 
 const MapView = dynamic(() => import('@/components/MapView'), {
@@ -38,18 +39,27 @@ type TabFilter = 'all' | 'land' | 'hotel'
 export default function HomePage() {
   const [search, setSearch] = useState('')
   const [tab, setTab] = useState<TabFilter>('all')
+  // initialise with static data so the page renders instantly
+  const [landData, setLandData] = useState<LandPlot[]>(LAND_DATA)
+  const [hotelData, setHotelData] = useState<Hotel[]>(HOTEL_DATA)
+
+  // replace with live Sheets data once loaded
+  useEffect(() => {
+    fetchLandData().then(setLandData)
+    fetchHotelData().then(setHotelData)
+  }, [])
 
   const areasWithCount = AREAS.map(a => ({
     ...a,
     count:
-      LAND_DATA.filter(l => l.province === a.province).length +
-      HOTEL_DATA.filter(h => h.province === a.province).length,
+      landData.filter(l => l.province === a.province).length +
+      hotelData.filter(h => h.province === a.province).length,
   }))
 
   const featured = useMemo(() => {
-    const lands = LAND_DATA.filter(l => l.status === 'Remained').slice(0, 8)
-    const hotels = HOTEL_DATA.filter(h => h.status === 'Remained').slice(0, 4)
-    type Entry = { item: typeof lands[0] | typeof hotels[0]; type: 'land' | 'hotel' }
+    const lands = landData.filter(l => l.status === 'Remained').slice(0, 8)
+    const hotels = hotelData.filter(h => h.status === 'Remained').slice(0, 4)
+    type Entry = { item: LandPlot | Hotel; type: 'land' | 'hotel' }
     let combined: Entry[] = []
     if (tab === 'all') {
       combined = [...lands.map(i => ({ item: i, type: 'land' as const })), ...hotels.map(i => ({ item: i, type: 'hotel' as const }))]
@@ -59,12 +69,12 @@ export default function HomePage() {
       combined = hotels.map(i => ({ item: i, type: 'hotel' as const }))
     }
     return combined.slice(0, 8)
-  }, [tab])
+  }, [tab, landData, hotelData])
 
-  const allMapItems = [
-    ...LAND_DATA.filter(l => l.lat && l.lng).map(landToMapItem),
-    ...HOTEL_DATA.filter(h => h.lat && h.lng).map(hotelToMapItem),
-  ]
+  const allMapItems = useMemo(() => [
+    ...landData.filter(l => l.lat && l.lng).map(landToMapItem),
+    ...hotelData.filter(h => h.lat && h.lng).map(hotelToMapItem),
+  ], [landData, hotelData])
 
   return (
     <div>
@@ -98,8 +108,8 @@ export default function HomePage() {
 
           <div className="flex flex-wrap justify-center gap-8 mb-10">
             {[
-              { num: '42', label: 'แปลงที่ดิน' },
-              { num: '8', label: 'โรงแรม' },
+              { num: String(landData.length), label: 'แปลงที่ดิน' },
+              { num: String(hotelData.length), label: 'โรงแรม' },
               { num: '15+', label: 'จังหวัดทั่วไทย' },
             ].map(s => (
               <div key={s.label} className="text-center">
