@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-navy: #0B2540;
+  --color-navy-light: #143354;
+  --color-gold: #C9A84C;
+  --color-gold-light: #E8C97A;
+  --color-cream: #FAF8F4;
+  --color-gray-400: #A0998C;
+  --color-gray-600: #6B6358;
+  --color-green-property: #2D6A4F;
+  --color-red-sold: #8B2020;
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-body: "Sarabun", system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-cream);
+  color: #1a1a1a;
+  font-family: var(--font-body);
+}
+
+@keyframes floatBlob {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-20px) scale(1.05); }
+}
+@keyframes floatBlob2 {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(15px) scale(0.95); }
+}
+.blob-1 { animation: floatBlob 8s ease-in-out infinite; }
+.blob-2 { animation: floatBlob2 10s ease-in-out infinite; }
+.blob-3 { animation: floatBlob 12s ease-in-out infinite 2s; }
